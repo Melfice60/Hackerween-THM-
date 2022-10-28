@@ -1,0 +1,51 @@
+Petite mise en situation pour Halloween, des employés discutent de la façon dont ils peuvent utiliser PrintNightmare pour augmenter leurs privilèges.
+
+Objectif : Trouver les artefacts de l'exploit utilisé.
+
+On ouvre FullEventLogView, on le paramètre pour voir la totalité des logs, et c'est parti !
+
+Task 1 : The user downloaded a zip file. What was the zip file saved as?
+
+On filtre les EventID 11, correspondant à des créations de fichiers. 161 items, c'est raisonnable. 
+On trouve assez rapidement notre .zip, téléchargé par notre cher collègue bmurphy (qui ne va pas tarder à avoir des problèmes).
+
+Task 2 : What is the full path to the exploit the user executed?
+
+L'unzip va créé d'autres fichiers, on reste donc sur l'EventID 11. Il est visible dans les logs dans la minute qui suit.
+On dispose de l'emplacement de l'executable utilisé, dans un dossier au nom de la CVE de PrintNightmare.
+Reste à confirmé qu'il a bien été utilisé, en filtrant l'EventID 4104 et le nom de l'executable. C'est confirmé, bmurphy est dans la sauce.
+
+Task 3 : What was the temp location the malicious DLL was saved to? 
+
+Les DLL liés à PrintNightmare sont repérables via les EventID 316 et 808. 
+Ici le 316 ne donne rien, mais la seule erreur lié à l'EventID 808 nous donne la réponse.
+
+Task 4 : What is the primary registry path associated with this attack?
+
+On va rechercher dans les EventID 13 ceux qui ont un lien avec spoolsv.exe. On voit que la clé de registre lié à THM-Printer à été modifié.
+
+Task 5 : What was the PID for the process that would have been blocked from loading a non-Microsoft-signed binary?
+
+Le process en question, c'est spoolsv.exe. Retrouver son PID n'est pas particulièrement difficile
+
+Task 6 : What is the username of the newly created local administrator account?
+
+On filtre les EventID 4720 pour repérer les créations de compte. Dans les trois qui sortent du filtre, le dernier sort vraiment du lot. 
+bmurphy s'installe une persistance.
+
+Task 7 : What is the password for this user?
+
+On sort un peu de FullEventLogView pour les deux dernières taches et on va jeter un oeil à ProcDOT, un outil que je découvre à cette occasion.
+Les monitoring logs sont fournis, on passe le tout et on arrive au choix du process à suivre. Dans ce cadre, deux sont pertinent : powershell et cmd.
+On commence par powershell, qui ne produit rien d'intéressant. 
+Avec cmd, on voit par contre qu'un historique des commandes a été créé dans  un dossier PSReadline chez bmurphy.
+Le mot de passe est disponible dans l'historique.
+
+Task 8 : What two commands did the user execute to cover their tracks? (no space after the comma)
+
+Ces commandes sont aussi disponibles dans l'historique, pas besoin de plus de recherches.
+
+
+
+
+Voilà, fini pour cette première room d'Hackerween. En attendant la suite, c'était vraiment sympa de remettre le nez dans les logs.
