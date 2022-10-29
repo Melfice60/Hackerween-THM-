@@ -1,0 +1,57 @@
+https://tryhackme.com/room/warzoneone
+
+Changement de mise en situation pour cette session 3 de Hackerween. Nous sommes désormais un analyste sécurité N1 en charge du monitoring réseau.
+Quelques minutes après la prise de service, c'est la première alerte.
+
+Objectif : Confirmer la positivité de l'alerte
+
+On ouvre la VM, et en route.
+
+Task 1 : What was the alert signature for Malware Command and Control Activity Detected? 
+Pas vraiment de difficulté, en ouvrant le pcap avec Brim c'est littéralement la première alerte. Juste à copier la signature.
+
+Task 2 : What is the source IP address? Enter your answer in a defanged format. 
+Encore une fois pas de difficulté, on est toujours dans la phase de visualisation de l'alerte.
+On ouvre et on observe un peu tous les éléments présents. Et on pense à defang l'IP.
+
+Task 3 : What IP address was the destination IP in the alert? Enter your answer in a defanged format.
+Idem tache précédente.
+
+Task 4 : Inspect the IP address in VirusTotal. Under Relations > Passive DNS Replication, which domain has the most detections? 
+Enter your answer in a defanged format.
+C'est parti pour l'analyse de l'IP de destination par VirusTotal. Pour le coup juste à suivre les instructions données.
+L'un des domaines a été détecté à 16 reprises.
+
+Task 5 : Still in VirusTotal, under Community, what threat group is attributed to this IP address?
+On bascule dans l'onglet Community pour obtenir la réponse à cette tache.
+
+Task 6 : What is the malware family?
+La réponse se trouve également dans l'onglet Community, pas besoin de recherches supplémentaires
+
+Task 7 : Do a search in VirusTotal for the domain from question 4. What was the majority file type listed under Communicating Files?
+On lance une nouvelle recherche avec le nom de domaine cette fois.
+La réponse se trouve dans l'onglet Relations, sous-groupe Communicating Files
+
+Task 8 : Inspect the web traffic for the flagged IP address; what is the user-agent in the traffic?
+Le moment est venu de mettre le nez dans Wireshark.
+On filtre le flux http avec l'adresse IP flaggée en tache 3. L'user-agent apparait dans le premier paquet à destination de l'IP flaggée.
+
+Task 9 : Retrace the attack; there were multiple IP addresses associated with this attack.
+What were two other IP addresses? Enter the IP addressed defanged and in numerical order.
+On filtre le flux http et l'IP source de la tache 2. Parmi les 4 premiers paquets, 2 utilisent Windows Installer comme user-agent.
+On defang et on valide.
+
+Task 10 : What were the file names of the downloaded files? Enter the answer in the order to the IP addresses from the previous question.
+Pour le premier, il suffit de suivre le flux TCP à partir de la requête qui nous a permis de le repérer dans la tâche précédente.
+La réponse se trouve dans la première ligne du flux. L'user-agent étant Windows Installer, on pouvait s'attendre à trouver du msi, et c'est confirmé.
+Pour le second, la réponse est littéralement dans l'info de la requête http de la tâche précedente \o/
+
+Task 11 : Inspect the traffic for the first downloaded file from the previous question. 
+Two files will be saved to the same directory. What is the full file path of the directory and the name of the two files?
+On reprend le flux TCP, et on regarde ce qui se passe. La réponse est tout en bas, avec le nom des deux fichiers créés, un bin et un exe.
+
+Task 12 : Now do the same and inspect the traffic from the second downloaded file. 
+Two files will be saved to the same directory. What is the full file path of the directory and the name of the two files?
+Idem à la tache précédente, la réponse est à la fin du flux TCP correspondant. Cette fois il s'agit d'un rb et d'un exe.
+
+C'est bon pour celle-ci, encore une room forensic, mes préférées, et un peu plus complexe que celle du 27.
