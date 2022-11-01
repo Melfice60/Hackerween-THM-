@@ -1,0 +1,61 @@
+https://tryhackme.com/room/posheclipse
+
+Dernier épisode de la série Hackerween, on retourne à notre rôle d'analyste SOC.
+Un client soupçonne le déploiement d'un ransomware sur son poste. 
+Nous passerons par Splunk pour une analyse en profondeur. Ca tombe bien, j'adore Splunk!
+
+On ouvre notre instance, on passe en All Time, et c'est parti pour la dernière.
+
+Task 1 : A suspicious binary was downloaded to the endpoint. What was the name of the binary?
+Avec plus de 12000 events, va falloir filtrer. De plus, il n'y a aucun flux http qui pourrait faire apparaitre un download évident.
+On va commencer par filtrer l'EventID 11, pour la création de fichiers, reste 1254 events.
+On va supposer que, logiquement, le binary a été créé sous les droits de l'utilisateur principal.
+Avec le filtre : index=main EventCode=11 User="DESKTOP-TBV8NEF\\keegan" il nous reste 122 events. On peut commencer a éplucher à la main.
+Le 5ème fait apparaitre le binary créé, le nom est clairement indicateur de quelque chose hors cadre.
+
+
+Task 2 : What is the address the binary was downloaded from? Add http:// to your answer & defang the URL.
+On va filtrer le binary et l'utilisateur pour pouvoir retracer la chaine d'évènement : index=main User="DESKTOP-TBV8NEF\\keegan" [redacted].exe
+Le premier event nous permet de voir que le binary a exploité les taches planifiées via un payload encodé en base64.
+On récupère le payload, on le décode et on regarde ce que ça donne. L'obfuscation est ici assez basique, le fichier est déjà lisible.
+L'adresse de téléchargement apparait juste derrière un wget.
+On oublie pas de defang avant de soumettre la réponse.
+
+Task 3 : What Windows executable was used to download the suspicious binary? Enter full path.
+On se réfère a notre Event de la tache précédente, l'executable utilisé est celui en ParentImage
+
+Task 4 : What command was executed to configure the suspicious binary to run with elevated privileges?
+La commande utilisée est dans le payload, pas besoin de plus de recherches.
+
+Task 5 : What permissions will the suspicious binary run as? What was the command to run the binary with elevated privileges? (Format: User + ; + CommandLine)
+Le binary malveillant n'a été utilisé que par deux utilisateurs, dont notre utilisateur de départ. 
+On déduit de fait assez facilement quel utilisateur a été utilisé pour l'élévation de privilèges.
+La commande utilisée pour l'execution avec privilège élevé se trouve sur la ligne Commandline de notre event trouvé sur la tache 2.
+
+Task 6 : The suspicious binary connected to a remote server. What address did it connect to? Add http:// to your answer & defang the URL.
+On reprend notre filtre precedent et on change l'utilisateur pour celui utilisé avec élévation de privilèges.
+Il reste encore plus de 300 events, mais on sait qu'on cherche une adresse URL à laquelle s'est connecté notre binary.
+L'eventID pour les DNSQuery est 22, on filtre la-dessus en plus : index=main outstanding_gutter.exe User="[redacted]" EventCode=22
+5 events, la réponse est le QueryName dans le premier event listé.
+Ne surtout pas oublié le defang avant soumission.
+
+Task 7 : A PowerShell script was downloaded to the same location as the suspicious binary. What was the name of the file?
+Une recherche avec : index=main *.ps1
+Il nous reste déjà à peine 36 events, et le script recherché est dans le premier. Plutot tranquille.
+
+Task 8 : The malicious script was flagged as malicious. What do you think was the actual name of the malicious script?
+On récupère le MD5 du script et on lance une search sur VirusTotal.
+L'onglet Details nous donne deux noms, le bon est le deuxième.
+
+Task 9 : A ransomware note was saved to disk, which can serve as an IOC. What is the full path to which the ransom note was saved?
+On commence par lancer cette recherche : index=main blacksun
+9 events, on peut jeter un oeil tranquillement aux résultats.
+Le deuxième est intéressant, il s'agit manifestement de l'outil d'encryption utilisé.
+La réponse se trouve dans le troisième event listé.
+
+Task 10 : The script saved an image file to disk to replace the user's desktop wallpaper, which can also serve as an IOC. What is the full path of the image?
+La recherche de la tache précédente nous avait donné la réponse avec le premier event.
+
+
+Fin de la Hackerween. Des choses faciles à aborder, d'autres nécessitant plus de temps et une approche moins directe.
+Plus de Blue Team que d'habitude, pour mon plus grand plaisir.
