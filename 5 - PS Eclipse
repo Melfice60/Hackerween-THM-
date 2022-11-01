@@ -35,7 +35,7 @@ La commande utilisée pour l'execution avec privilège élevé se trouve sur la 
 Task 6 : The suspicious binary connected to a remote server. What address did it connect to? Add http:// to your answer & defang the URL.
 On reprend notre filtre precedent et on change l'utilisateur pour celui utilisé avec élévation de privilèges.
 Il reste encore plus de 300 events, mais on sait qu'on cherche une adresse URL à laquelle s'est connecté notre binary.
-L'eventID pour les DNSQuery est 22, on filtre la-dessus en plus : index=main outstanding_gutter.exe User="[redacted]" EventCode=22
+L'eventID pour les DNSQuery est 22, on filtre la-dessus en plus : index=main [redacted].exe User="[redacted]" EventCode=22
 5 events, la réponse est le QueryName dans le premier event listé.
 Ne surtout pas oublié le defang avant soumission.
 
