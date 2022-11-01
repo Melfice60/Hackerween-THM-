@@ -48,7 +48,7 @@ On récupère le MD5 du script et on lance une search sur VirusTotal.
 L'onglet Details nous donne deux noms, le bon est le deuxième.
 
 Task 9 : A ransomware note was saved to disk, which can serve as an IOC. What is the full path to which the ransom note was saved?
-On commence par lancer cette recherche : index=main blacksun
+On commence par lancer cette recherche avec le nom trouvé sur VirusTotal : index=main [redacted]
 9 events, on peut jeter un oeil tranquillement aux résultats.
 Le deuxième est intéressant, il s'agit manifestement de l'outil d'encryption utilisé.
 La réponse se trouve dans le troisième event listé.
